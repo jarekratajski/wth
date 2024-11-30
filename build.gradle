@@ -1,0 +1,91 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+}
+
+group = 'pl.setblack'
+version = '0.0.4-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.slf4j:slf4j-api:2.0.7'
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'wth-lib'
+            from components.java
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+            pom {
+                name = 'wth-lib'
+                description = 'Library you don`t want to use'
+                url = 'http://www.example.com/library'
+                properties = [
+                        myProp: "value",
+                        "prop.with.dots": "anotherValue"
+                ]
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'jarekr'
+                        name = 'Jarek Ratajski'
+                        email = 'jratajski@gmail.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:https://github.com/jratajski/wth.git'
+                    developerConnection = 'scm:git:http://github.com/jarekratajski/'
+                    url = 'http://github.com/jarekratajski/wth'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            def releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+            def snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots/")
+            def isRelease = false
+            name = "deploy"
+            println("isRelease: $isRelease")
+            println("user: ${System.getenv("OSSRH_USERNAME")}")
+            url = isRelease ? releasesRepoUrl : snapshotsRepoUrl
+            credentials {
+                username = System.getenv("OSSRH_USERNAME") ?: ossrhUsername
+                password = System.getenv("OSSRH_PASSWORD") ?: ossrhPassword
+            }
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
+    sign publishing.publications.mavenJava
+}
